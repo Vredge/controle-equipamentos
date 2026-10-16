@@ -1,0 +1,16 @@
+# Ambiente LOCAL.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: equipamentos_db_dev
+    enviroment:
+      POSTGRES_USER: equipamentos
+      POSTGRES_PASSWORD: senha_dev
+      POSTGRES_DB: equipamentos_db
+    ports:
+    - "127.0.0.1:5432:5432"
+    volumes:
+    - equipamentos_dev_data:/var/lib/postgresql/data
+volumes:
+  equipamentos_dev_data:
