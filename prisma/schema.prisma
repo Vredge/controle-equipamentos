@@ -5,11 +5,243 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ---ENUMS---
+
+enum Role {
+  ADMIN
+  TECNICO
+}
+
+enum TipoEquipamento {
+  COMPUTADOR
+  IMPRESSORA
+  MONITOR
+  NOTEBOOK
+  ESTABILIZADOR
+  NOBREAK
+  OUTRO
+  REDE //Roteador, Switch, AP
+}
+
+enum TipoServico {
+  MANUTENCAO
+  INSTALACAO
+  CONFIGURACAO
+  VISTORIA
+  OUTRO
+}
+
+enum StatusAtendimento {
+  EM_ANDAMENTO
+  EM_ANALISE
+  EM_SERVICO
+  AGUARDANDO_PECA
+  PRONTO_RETIRADA
+  ENTREGUE
+  BAIXA
+  PENDENTE
+  CONCLUIDO
+  CANCELADO
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  EM_ANDAMENTO
+  DIAGNOSTICO
+  TipoServicoPECA
+  StatusAtendimentoNOTA
+  SAIDA
+}
+
+enum StatusPeca {
+  PENDENTE
+  RECEBIDA
+  SOLICITADA
+  CONCLUIDA
+  CANCELADA
+}
+
+// ---TABLES---
+
+model User {
+  id                      Int                     @id @default(autoincrement())
+  nome                    String
+  email                   String                  @unique
+  senhaHash               String
+  role                    Role                    @default(TECNICO)
+  ativo                   Boolean                 @default(true)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+
+  atendimentosCriados     Atendimento[]           @relation("CriadoPor")
+  equipamentosCriados     Equipamento[]           @relation("EquipamentoCriadoPor")
+  alteracoesEquipamento   AlteracaoEquipamento[]
+  movimentacoes           Movimentacao[]
+  fotos                   Foto[]
+}
+
+model Secretaria {
+  id            Int                     @id @default(autoincrement())
+  nome          String                  @unique
+  sigla         String?
+  ativa         Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+
+  unidades      Unidade[]
+  equipamentos  Equipamento[]
+  atendimentos  Atendimento[]
+}
+
+model Unidade {
+  id                Int                 @id @default(autoincrement())
+  nome              String
+  sigla             String
+  secretariaId      Int
+  secretaria        Secretaria          @relation(fields: [secretariaId], references: [id])
+  ativa             Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+
+  equipamentos      Equipamento[]
+  atendimentos      Atendimento[]
+
+  @@unique([secretariaId, nome])
+}
+
+model Equipamento {
+  id                  Int               @id @default(autoincrement())
+  tipo                TipoEquipamento
+  marca               String?
+  modelo              String?
+  patrimonio          String?           @unique
+  numSerial           String?
+  secretariaId        Int
+  secretaria          Secretaria        @relation(fields: [secretariaId], references: [id])
+  unidadeId           Int?
+  unidade             Unidade?          @relation(fields: [unidadeId], references: [id])
+  setor               String?
+
+  // ---------------------CONFIGURAÇÃO---------------------
+  processador         String?
+  memoria             String?
+  armazenamento       String?
+  sistemaOperacional  String?
+
+  criadoPorId         Int
+  criadopPor          User              @relation("EquipamentoCriadoPor", fields: [criadoPorId], references: [id])
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  atendimentos        Atendimento[]
+  alteracoes          AlteracaoEquipamento[]
+}
+
+model AlteracaoEquipamento {
+  id                  Int         @id @default(autoincrement())
+  equipamentoId       Int
+  equipamento         Equipamento @relation(fields: [equipamentoId], references: [id])
+  campo               String
+  valorAnterior       String?
+  valorNovo           String?
+  usuarioId           Int
+  usuario             User
+  createdAt           DateTime
+
+  @@index([equipamentoId])
+}
+
+model Atendimento {
+  id                Int               @id @default(autoincrement())
+  equipamentoId     Int
+  equipamento       Equipamento       @relation(fields: [equipamentoId], references: [id])
+  servico           TipoServico
+  problemaRelatado  String
+  entreguePor       String
+  status            StatusAtendimento @default(RECEBIDO)
+
+  secretariaId      Int
+  secretaria        Secretaria        @relation(fields: [unidadeID], references: [id])
+  unidadeId         Int?
+  unidade           Unidade?
+  setor             String?
+
+  dataEntrada       DateTime          @default(now())
+  dataSaida         DateTime?
+
+  retiradoPor       String?
+  solucao           String?
+  criadoPorId       Int
+  criadoPor         User              @relation("CriadoPor", fields: [criadoPorId], references: [id])
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  movimentacoes     Movimentacao[]
+
+  pecas             Peca[]
+  fotos             Foto[]
+
+  @@index([status])
+  @@index([secretariaId])
+}
+
+model Movimentacao {
+  id              Int               @id @default(autoincrement())
+  atendimentoId   Int
+  atendimento     Atendimento       @relation(fields: [atendimentoId], references: [id])
+  tipo            TipoMovimentacao
+  texto           String
+  statusAnterior  StatusAtendimento?
+  statusNovo      StatusAtendimento?
+  usuarioId       Int
+  usuario         User               @relation(fields: [usuarioId], references: [id])
+  createdAt       DateTime            @default(now())
+
+  @@index([atendimentoId])
+}
+
+model Peca {
+  id              Int           @id @default(autoincrement())
+  atendimentoId   Int
+  atendimento     Atendimento   @relation(fields: [atendimentoId], references: [id])
+  descricao       String
+  quantidade      Int           @default(1)
+  status          StatusPeca    @default(PENDENTE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Foto {
+  id                Int             @id @default(autoincrement())
+  atendimentoId     Int
+  atendimento       Atendimento     @relation(fields: [atendimentoId], references: [id])
+  arquivo           String          @unique
+  legenda           String?
+  tamanhoOriginal   Int
+  tamanhoProcessado Int
+  enviadoPorId      Int
+  enviadoPor        User            @relation(fields: [enviadoPorId], references: [id])
+  createdAt         DateTime        @default(now())
+}
+
+model LogAuditoria {
+  id            Int       @id @default(autoincrement())
+  userId        Int?
+  userNome      String
+  userRole      String
+  acao          String
+  detalhe       String?
+  ip            String?
+  createdAt     DateTime  @default(now())
+
+  @@index([createdAt])
 }
