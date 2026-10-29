@@ -49,6 +49,7 @@ enum StatusAtendimento {
   ENTREGUE
   BAIXA
   PENDENTE
+  RECEBIDO
   CONCLUIDO
   CANCELADO
 }
@@ -153,8 +154,8 @@ model AlteracaoEquipamento {
   valorAnterior       String?
   valorNovo           String?
   usuarioId           Int
-  usuario             User
-  createdAt           DateTime
+  usuario             User        @relation(fields: [usuarioId], references: [id])
+  createdAt           DateTime    @default(now())
 
   @@index([equipamentoId])
 }
@@ -169,9 +170,9 @@ model Atendimento {
   status            StatusAtendimento @default(RECEBIDO)
 
   secretariaId      Int
-  secretaria        Secretaria        @relation(fields: [unidadeID], references: [id])
+  secretaria        Secretaria        @relation(fields: [secretariaId], references: [id])
   unidadeId         Int?
-  unidade           Unidade?
+  unidade           Unidade?          @relation(fields: [unidadeId], references: [id])
   setor             String?
 
   dataEntrada       DateTime          @default(now())
