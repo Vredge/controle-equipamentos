@@ -33,15 +33,14 @@ enum TipoEquipamento {
 }
 
 enum TipoServico {
+  FORMATACAO
   MANUTENCAO
-  INSTALACAO
   CONFIGURACAO
   VISTORIA
   OUTRO
 }
 
 enum StatusAtendimento {
-  EM_ANDAMENTO
   EM_ANALISE
   EM_SERVICO
   AGUARDANDO_PECA
@@ -59,7 +58,7 @@ enum TipoMovimentacao {
   EM_ANDAMENTO
   DIAGNOSTICO
   TipoServicoPECA
-  StatusAtendimentoNOTA
+  NOTA
   SAIDA
 }
 
