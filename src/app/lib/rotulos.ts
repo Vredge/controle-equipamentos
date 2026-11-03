@@ -35,7 +35,10 @@ export const STATUS: Record<StatusAtendimento, string>  = {
     PRONTO_RETIRADA: "Pronto para retirada",
     ENTREGUE: "Entregue",
     BAIXA: "Baixa patrimonial",
-};
+    PENDENTE: "Pendente",
+    CONCLUIDO: "Concluído",
+    CANCELADO: "Cancelado",
+};  
 
 // define cores das tags de status do atendimento dos serviços.
 export const COR_STATUS: Record<StatusAtendimento, string> = {
@@ -46,6 +49,9 @@ export const COR_STATUS: Record<StatusAtendimento, string> = {
     PRONTO_RETIRADA: "bg-emerald-50 text-emerald-800 ring-emerald-300",
     ENTREGUE: "bg-gray-100 text-gray-600 ring-gray-300",
     BAIXA: "bg-red-50 text-red-800 ring-red-300",
+    PENDENTE: "bg-violet-50 text-violet-800 ring-violet-300",
+    CONCLUIDO: "bg-lime-50 text-lime-800 ring-lime-300",
+    CANCELADO: "bg-fuchsia-50 text-fuchsia-800 ring-fuchsia-300",
 };
 
 export const STATUS_ABERTOS: StatusAtendimento[] = [
